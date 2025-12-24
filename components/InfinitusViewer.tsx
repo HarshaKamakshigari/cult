@@ -105,7 +105,7 @@ export default function InfinitusViewer(): JSX.Element {
     Draggable.create(win, {
       type: "x,y",
       bounds: container,
-      inertia: true,
+      inertia: false,
       onDrag() {
         gsap.set(view, { x: -this.x, y: -this.y });
       },
@@ -116,10 +116,10 @@ export default function InfinitusViewer(): JSX.Element {
 
   function spawnWindows() {
     const offsets = [
-      { x: 120, y: 100, w: 520, h: 320 },
-      { x: 600, y: 140, w: 320, h: 240 },
-      { x: 300, y: 300, w: 320, h: 240 },
-      { x: 780, y: 420, w: 240, h: 180 },
+      { x: 200, y: 100, w: 520, h: 320 },
+      { x: 900, y: 140, w: 420, h: 240 },
+      { x: 200, y: 400, w: 320, h: 200 },
+      { x: 600, y: 200, w: 600, h: 350 },
       { x: 520, y: 260, w: 240, h: 180 },
     ];
 

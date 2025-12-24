@@ -16,7 +16,7 @@ export default function Header({ onMenuClick }: HeaderProps): JSX.Element {
         onClick={onMenuClick}
         aria-label="Open menu"
       >
-        <span>MENU</span>
+        {/* <span>MENU</span> */}
       </button>
     </header>
   );
