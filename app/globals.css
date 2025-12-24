@@ -113,7 +113,7 @@ body {
 
 .window {
   position: absolute;
-  border-radius: 10px;
+  /* border-radius: 10px; */
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(6px);
@@ -139,7 +139,7 @@ body {
 /* ================= WINDOW CONTENT ================= */
 
 .window-content {
-  height: calc(100% - 35px);
+  height: calc(100% - 5px);
   position: relative;
   overflow: hidden;
 }

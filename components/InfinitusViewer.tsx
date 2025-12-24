@@ -116,11 +116,12 @@ export default function InfinitusViewer(): JSX.Element {
 
   function spawnWindows() {
     const offsets = [
-      { x: 200, y: 100, w: 520, h: 320 },
-      { x: 900, y: 140, w: 420, h: 240 },
+      { x: 100, y: 100, w: 580, h: 320 },
+      { x: 700, y: 100, w: 240, h: 180 },
       { x: 200, y: 400, w: 320, h: 200 },
-      { x: 600, y: 200, w: 600, h: 350 },
-      { x: 520, y: 260, w: 240, h: 180 },
+      { x: 500, y: 200, w: 700, h: 350 },
+      { x: 1000, y: 100, w: 420, h: 240 },
+      { x: 1090, y: 400, w: 240, h: 180 },
     ];
 
     offsets.forEach((o, i) =>
