@@ -1238,7 +1238,7 @@ export default function MenuOverlay({
        * - will-change - Hints GPU about animated properties
        * - contain: layout style - CSS containment for better performance
        * - -webkit-font-smoothing - Better font rendering
-       */
+       */}
       <style jsx>{`
         .menu {
           position: fixed;
