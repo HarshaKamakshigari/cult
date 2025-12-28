@@ -7,12 +7,17 @@ import InertiaPlugin from "gsap/InertiaPlugin";
 
 gsap.registerPlugin(Draggable, InertiaPlugin);
 
-const IMAGES: string[] = [
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
-  "https://images.unsplash.com/photo-1518709268805-4e9042af9f23",
+type MediaItem = {
+  type: "image" | "video";
+  src: string;
+};
+
+const MEDIA: MediaItem[] = [
+  { type: "video", src: "/videos/video-01.mp4" },
+  { type: "video", src: "/videos/video-02.mp4" },
+  { type: "video", src: "/videos/video-03.mp4" },
+  { type: "image", src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e" },
+  { type: "image", src: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23" },
 ];
 
 export default function InfinitusViewer(): JSX.Element {
@@ -27,7 +32,7 @@ export default function InfinitusViewer(): JSX.Element {
 
   /* ================= IMAGE TRANSITION ================= */
 
- function smoothImageTransition(nextIndex: number) {
+ function smoothMediaTransition(nextIndex: number) {
   windowsRef.current.forEach((win) => {
     const view = win.querySelector(".window-view") as HTMLDivElement;
 
@@ -36,7 +41,24 @@ export default function InfinitusViewer(): JSX.Element {
       duration: 0.3,
       ease: "power2.out",
       onComplete: () => {
-        view.style.backgroundImage = `url(${IMAGES[nextIndex]})`;
+        const media = MEDIA[nextIndex];
+        
+        // Remove existing content
+        view.innerHTML = "";
+        
+        if (media.type === "video") {
+          const video = document.createElement("video");
+          video.src = media.src;
+          video.autoplay = true;
+          video.loop = true;
+          video.muted = true;
+          video.style.width = "100%";
+          video.style.height = "100%";
+          video.style.objectFit = "cover";
+          view.appendChild(video);
+        } else {
+          view.style.backgroundImage = `url(${media.src})`;
+        }
 
         gsap.to(view, {
           opacity: 1,
@@ -69,10 +91,12 @@ export default function InfinitusViewer(): JSX.Element {
     win.style.width = `${w}px`;
     win.style.height = `${h}px`;
 
+    const media = MEDIA[currentImage.current];
+    
     win.innerHTML = `
       <div class="window-header">Infinitus 26</div>
       <div class="window-content">
-        <div class="window-view" style="background-image:url('${IMAGES[currentImage.current]}')"></div>
+        <div class="window-view"></div>
       </div>
     `;
 
@@ -80,6 +104,21 @@ export default function InfinitusViewer(): JSX.Element {
     windowsRef.current.push(win);
 
     const view = win.querySelector(".window-view") as HTMLDivElement;
+    
+    // Set initial media content
+    if (media.type === "video") {
+      const video = document.createElement("video");
+      video.src = media.src;
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.style.width = "100%";
+      video.style.height = "100%";
+      video.style.objectFit = "cover";
+      view.appendChild(video);
+    } else {
+      view.style.backgroundImage = `url(${media.src})`;
+    }
 
     gsap.fromTo(
       win,
@@ -144,10 +183,10 @@ export default function InfinitusViewer(): JSX.Element {
         const direction = scrollAccumulator.current > 0 ? 1 : -1;
         let next = currentImage.current + direction;
 
-        if (next >= IMAGES.length) next = 0;
-        if (next < 0) next = IMAGES.length - 1;
+        if (next >= MEDIA.length) next = 0;
+        if (next < 0) next = MEDIA.length - 1;
 
-        smoothImageTransition(next);
+        smoothMediaTransition(next);
         currentImage.current = next;
         scrollAccumulator.current = 0;
 
