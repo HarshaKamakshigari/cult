@@ -1,3 +1,21 @@
+/**
+ * Root Layout Component
+ * 
+ * This is the main layout wrapper for the entire application.
+ * It provides:
+ * - Global header with logo and menu icon
+ * - Menu overlay toggle functionality
+ * - Anton font integration from Google Fonts
+ * - Client-side state management for menu open/close
+ */
+
+// ============================================================================
+// ARCHIVED DEFAULT NEXT.JS SETUP (kept for reference)
+// ============================================================================
+// The following code was the default Next.js layout with Geist fonts.
+// It has been replaced with a custom implementation using Anton font
+// and a client-side menu overlay system.
+// ============================================================================
 // import type { Metadata } from "next";
 // import { Geist, Geist_Mono } from "next/font/google";
 // import "./globals.css";
@@ -32,42 +50,89 @@
 //     </html>
 //   );
 // }
+// ============================================================================
+
 "use client";
 
-import { useState } from "react";
-import "./globals.css";
-import MenuOverlay from "@/components/MenuOverlay";
+// ============================================================================
+// IMPORTS
+// ============================================================================
+import { useState } from "react";          // For managing menu open/close state
+import "./globals.css";                   // Global styles and CSS variables
+import MenuOverlay from "@/components/MenuOverlay"; // Full-screen menu component
 
+// ============================================================================
+// ROOT LAYOUT COMPONENT
+// ============================================================================
+/**
+ * RootLayout - Main application wrapper component
+ * 
+ * Responsibilities:
+ * - Provides HTML structure with Anton font preloading
+ * - Manages global menu state (open/close)
+ * - Renders persistent header with logo and menu toggle
+ * - Wraps all child pages with consistent layout
+ * 
+ * @param children - Child components/pages to be rendered within the layout
+ */
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Menu state management - controls MenuOverlay visibility
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <html lang="en">
+      <head>
+        {/* ================================================================ */}
+        {/* FONT PRELOADING - Anton from Google Fonts                        */}
+        {/* ================================================================ */}
+        {/* Preconnect to Google Fonts for faster font loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Load Anton font with display=swap for better performance */}
+        <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+      </head>
       <body>
-        {/* GLOBAL HEADER */}
+        {/* ================================================================ */}
+        {/* GLOBAL HEADER - Persistent across all pages                     */}
+        {/* ================================================================ */}
+        {/* Fixed header containing logo and hamburger menu icon */}
         <div className="header">
+          {/* Application logo/title */}
           <div className="logo">INFINITUS</div>
 
+          {/* Hamburger menu icon - opens the full-screen menu overlay */}
           <div
             className="menu-icon"
             onClick={() => setMenuOpen(true)}
           >
-            <span />
-            <span />
-            <span />
+            <span /> {/* Top bar */}
+            <span /> {/* Middle bar */}
+            <span /> {/* Bottom bar */}
           </div>
         </div>
 
-        {/* MENU OVERLAY */}
+        {/* ================================================================ */}
+        {/* FULL-SCREEN MENU OVERLAY                                        */}
+        {/* ================================================================ */}
+        {/* 
+          MenuOverlay Component:
+          - Renders a full-screen menu with 3D text effects (desktop)
+          - Uses velocity-based stretch shaders for dynamic text distortion
+          - Includes smooth scrolling with physics-based animation
+          - Mobile-responsive with simplified layout
+        */}
         <MenuOverlay
           isOpen={menuOpen}
           onClose={() => setMenuOpen(false)}
         />
 
+        {/* ================================================================ */}
+        {/* PAGE CONTENT - Rendered from child routes                       */}
+        {/* ================================================================ */}
         {children}
       </body>
     </html>
