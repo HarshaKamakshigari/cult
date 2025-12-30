@@ -96,6 +96,8 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
         {/* Load Climate Crisis font for INFINITUS text */}
         <link href="https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1979&display=swap" rel="stylesheet" />
+        {/* Load Share Tech Mono font for window headers - sci-fi monospace style */}
+        <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
       </head>
       <body>
         {/* ================================================================ */}

@@ -89,12 +89,7 @@ body {
 
 .window {
   position: absolute;
-  /* border-radius: 10px; */
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(6px);
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  overflow: visible;
   z-index: 10;
   opacity: 0;
 }
@@ -102,23 +97,71 @@ body {
 /* ================= WINDOW HEADER ================= */
 
 .window-header {
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.4);
+  position: absolute;
+  top: -20px;
+  left: 0;
+  padding: 4px 8px;
+  background: rgba(200, 200, 200, 0.15);
+  -webkit-backdrop-filter: blur(6px) saturate(120%) contrast(90%);
+  backdrop-filter: blur(6px) saturate(120%) contrast(90%);
   cursor: grab;
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
+  width: fit-content;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 14px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  text-transform: none;
   color: white;
+  overflow: hidden;
+}
+
+.window-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.08) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ================= WINDOW CONTENT ================= */
 
 .window-content {
-  height: calc(100% - 5px);
+  height: 100%;
   position: relative;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-radius: 1px;
+}
+
+.window-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .window-view {

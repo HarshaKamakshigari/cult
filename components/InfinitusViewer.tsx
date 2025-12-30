@@ -78,7 +78,9 @@ export default function InfinitusViewer(): JSX.Element {
   function updateCoordinates(win: HTMLDivElement, x: number, y: number) {
     const header = win.querySelector(".window-header") as HTMLDivElement;
     if (header) {
-      header.textContent = `x: ${Math.round(x)}, y: ${Math.round(y)}`;
+      const xPadded = Math.round(x).toString().padStart(4, '0');
+      const yPadded = Math.round(y).toString().padStart(4, '0');
+      header.textContent = `X:${xPadded}px Y:${yPadded}px`;
     }
   }
 
@@ -104,8 +106,11 @@ export default function InfinitusViewer(): JSX.Element {
 
     const media = MEDIA[currentImage.current];
     
+    const xPadded = Math.round(x).toString().padStart(4, '0');
+    const yPadded = Math.round(y).toString().padStart(4, '0');
+    
     win.innerHTML = `
-      <div class="window-header">x: ${Math.round(x)}, y: ${Math.round(y)}</div>
+      <div class="window-header">X:${xPadded}px Y:${yPadded}px</div>
       <div class="window-content">
         <div class="window-view"></div>
       </div>
@@ -131,65 +136,278 @@ export default function InfinitusViewer(): JSX.Element {
       view.style.backgroundImage = `url(${media.src})`;
     }
 
-    gsap.fromTo(
-      win,
-      {
-        x: cx,
-        y: cy,
-        scale: 0.2,
-        opacity: 0,
-      },
-      {
-        x,
-        y,
-        scale: 1,
-        opacity: 1,
-        duration: 1.1,
-        delay,
-        ease: "elastic.out(1, 0.5)",
-      }
-    );
+    // Place window at its target and set initial hidden state.
+    // Headers will appear first (instantly), then the windows will pop out from the header's top-left corner.
+    gsap.set(win, { x, y, scale: 0, opacity: 1 });
+    win.style.transformOrigin = '0 0';
+
+    const headerEl = win.querySelector('.window-header') as HTMLElement;
+    if (headerEl) {
+      // keep header hidden until spawn sequence; headers will be shown instantly by spawn
+      headerEl.style.opacity = '0';
+      // ensure header has its own transform origin for any future transforms
+      headerEl.style.transformOrigin = '0 0';
+    }
 
     gsap.set(view, { x: -x, y: -y });
 
-    Draggable.create(win, {
+    // Smooth position state for window
+    let currentX = x;
+    let currentY = y;
+    let targetX = x;
+    let targetY = y;
+    
+    // Smooth animation loop for buttery window drag
+    const tickerCallback = () => {
+      // Lerp towards target
+      currentX += (targetX - currentX) * 0.15;
+      currentY += (targetY - currentY) * 0.15;
+      
+      // Apply smooth position to window
+      gsap.set(win, { x: currentX, y: currentY });
+      // View follows window immediately (no lag)
+      view.style.transform = `translate(${-currentX}px, ${-currentY}px)`;
+      updateCoordinates(win, currentX, currentY);
+    };
+    
+    gsap.ticker.add(tickerCallback);
+
+    const dragInstances = Draggable.create(win, {
       type: "x,y",
       bounds: container,
       inertia: false,
+      allowEventDefault: true,
       onDrag() {
-        gsap.set(view, { x: -this.x, y: -this.y });
-        updateCoordinates(win, this.x, this.y);
+        // Set target - window will smooth towards it
+        targetX = this.x;
+        targetY = this.y;
+        // Override Draggable's position with our smooth one
+        gsap.set(this.target, { x: currentX, y: currentY });
       },
     });
+
+    const dragInstance = dragInstances && dragInstances[0];
+
+    // Attach cleanup handler to the window element so we can remove ticker & draggable when deleting
+    (win as any)._cleanup = () => {
+      try { gsap.ticker.remove(tickerCallback); } catch (e) {}
+      try { if (dragInstance && typeof dragInstance.kill === 'function') dragInstance.kill(); } catch (e) {}
+      try { gsap.killTweensOf(win); } catch (e) {}
+    };
   }
 
   /* ================= INIT WINDOWS ================= */
 
+  function clearWindows() {
+    // remove all existing windows from the DOM and clear refs (with cleanup)
+    windowsRef.current.forEach((w) => {
+      try { (w as any)._cleanup?.(); } catch (e) {}
+      try { w.remove(); } catch (e) {}
+    });
+    windowsRef.current = [];
+  }
+
+  function hideWindowsStaggered(interval = 80) {
+    // hide windows one by one with an instant-feel effect and cleanup
+    const wins = [...windowsRef.current];
+    wins.forEach((win, i) => {
+      setTimeout(() => {
+        try { (win as any)._cleanup?.(); } catch (e) {}
+        // Instant individual disappearance - use a very short tween for a snappy feel
+        gsap.to(win, { opacity: 0, scale: 0.96, duration: 0.06, ease: 'power1.out', onComplete: () => {
+          try { win.remove(); } catch (e) {}
+          const idx = windowsRef.current.indexOf(win);
+          if (idx > -1) windowsRef.current.splice(idx, 1);
+        }});
+      }, i * interval);
+    });
+  }
+
   function spawnWindows() {
-    const offsets = [
-      { x: 100, y: 100, w: 580, h: 320 },
-      { x: 700, y: 100, w: 240, h: 180 },
-      { x: 200, y: 400, w: 320, h: 200 },
-      { x: 500, y: 200, w: 700, h: 350 },
-      { x: 1000, y: 100, w: 420, h: 240 },
-      { x: 1090, y: 400, w: 240, h: 180 },
+    const container = containerRef.current;
+    if (!container) return;
+
+    const containerW = container.offsetWidth;
+    const containerH = container.offsetHeight;
+    const rem = 16;
+    // 16:9 aspect ratio
+    const aspect = 9 / 16;
+
+    // Make windows 1 & 2 dynamic relative to container size
+    let w1 = Math.round(containerW * 0.39); // ~752px at 1920px wide
+    let h1 = Math.round(w1 * aspect);
+
+    let w2 = Math.round(containerW * 0.695); // ~1336px at 1920px wide
+    let h2 = Math.round(w2 * aspect);
+
+    // Reduce the largest of the two by 15% and shrink the other by 10%
+    if (w2 > w1) {
+      w2 = Math.round(w2 * 0.85); // largest reduced by 15%
+      h2 = Math.round(w2 * aspect);
+      w1 = Math.round(w1 * 0.9); // other reduced by 10%
+      h1 = Math.round(w1 * aspect);
+    } else {
+      w1 = Math.round(w1 * 0.85);
+      h1 = Math.round(w1 * aspect);
+      w2 = Math.round(w2 * 0.9);
+      h2 = Math.round(w2 * aspect);
+    }
+
+    // Shrink windows 3-6 by 10%
+    const w3 = Math.round(18 * rem * 0.9);
+    const h3 = Math.round(w3 * aspect);
+
+    const w4 = Math.round(40 * rem * 0.9);
+    const h4 = Math.round(w4 * aspect);
+
+    const w5 = Math.round(40 * rem * 0.9);
+    const h5 = Math.round(w5 * aspect);
+
+    const w6 = Math.round(24 * rem * 0.9);
+    const h6 = Math.round(w6 * aspect);
+
+    // Helper to place windows allowing up to 50% overlap (tries up to 30 times)
+    const placed: Array<{ x: number; y: number; w: number; h: number }> = [];
+    const pad = Math.round(rem * 1.5); // padding around the page to keep windows in bounds
+    function placeWithLimitedOverlap(w: number, h: number) {
+      let tries = 0;
+      const MAX_TRIES = 30;
+      const MAX_OVERLAP_FRAC = 0.5; // allow up to 50% overlap relative to smaller window area
+
+      function overlapFraction(x: number, y: number, r: { x: number; y: number; w: number; h: number }) {
+        const overlapX = Math.max(0, Math.min(x + w, r.x + r.w) - Math.max(x, r.x));
+        const overlapY = Math.max(0, Math.min(y + h, r.y + r.h) - Math.max(y, r.y));
+        const overlapArea = overlapX * overlapY;
+        if (overlapArea <= 0) return 0;
+        const minArea = Math.min(w * h, r.w * r.h);
+        return overlapArea / minArea;
+      }
+
+      const maxXRange = Math.max(0, containerW - pad * 2 - w);
+      const maxYRange = Math.max(0, containerH - pad * 2 - h);
+
+      while (tries < MAX_TRIES) {
+        const x = Math.round(pad + Math.random() * maxXRange);
+        const y = Math.round(pad + Math.random() * maxYRange);
+        let ok = true;
+        for (const r of placed) {
+          if (overlapFraction(x, y, r) > MAX_OVERLAP_FRAC) {
+            ok = false;
+            break;
+          }
+        }
+        if (ok) {
+          placed.push({ x, y, w, h });
+          return { x, y };
+        }
+        tries++;
+      }
+
+      // fallback: pick position with minimal maximum overlap fraction (sampled)
+      let best = { x: pad, y: pad, worst: Infinity };
+      for (let i = 0; i < 50; i++) {
+        const x = Math.round(pad + Math.random() * maxXRange);
+        const y = Math.round(pad + Math.random() * maxYRange);
+        let worstFrac = 0;
+        for (const r of placed) {
+          const frac = overlapFraction(x, y, r);
+          if (frac > worstFrac) worstFrac = frac;
+        }
+        if (worstFrac < best.worst) best = { x, y, worst: worstFrac };
+      }
+      placed.push({ x: best.x, y: best.y, w, h });
+      return { x: best.x, y: best.y };
+    }
+
+    const specs = [
+      { w: w1, h: h1 },
+      { w: w2, h: h2 },
+      { w: w3, h: h3 },
+      { w: w4, h: h4 },
+      { w: w5, h: h5 },
+      { w: w6, h: h6 },
     ];
 
-    offsets.forEach((o, i) =>
-      createWindow(o.x, o.y, o.w, o.h, i * 0.12)
-    );
+    // Clear existing windows and place new ones randomly
+    clearWindows();
+
+    specs.forEach((s, i) => {
+      const pos = placeWithLimitedOverlap(s.w, s.h);
+      createWindow(pos.x, pos.y, s.w, s.h, i * 0.12);
+    });
+
+    // After all windows are created, first show headers for all, then pop windows out from header top-left
+    const newWins = [...windowsRef.current];
+    const headers = newWins.map((w) => w.querySelector('.window-header') as HTMLElement).filter(Boolean);
+
+    if (headers.length) {
+      // show headers instantly (no opacity animation) with a slight stagger
+      gsap.to(headers, {
+        opacity: 1,
+        duration: 0,
+        stagger: 0.04,
+        onComplete: () => {
+          // pop windows out from their header origin with a buttery, smooth animation (no opacity change)
+          newWins.forEach((w) => { w.style.transformOrigin = '0 0'; });
+          // ensure they start scaled from 0 and slightly above the header for a pop-from-header effect
+          gsap.set(newWins, { y: -12, scale: 0 });
+          gsap.fromTo(newWins,
+            { y: -12, scale: 0 },
+            {
+              y: 0,
+              scale: 1,
+              duration: 1.4,
+              ease: 'power3.out',
+              stagger: 0.08,
+            }
+          );
+        },
+      });
+    } else {
+      // fallback: smooth pop with same buttery feel (no opacity change)
+      gsap.set(newWins, { y: -12, scale: 0 });
+      gsap.fromTo(newWins,
+        { y: -12, scale: 0 },
+        {
+          y: 0,
+          scale: 1,
+          duration: 1.4,
+          ease: 'power3.out',
+          stagger: 0.08,
+        }
+      );
+    }
   }
 
   /* ================= SCROLL HANDLER ================= */
 
   useEffect(() => {
+    // Ensure only one video change per continuous scroll gesture
+    const SCROLL_END_DELAY = 2000; // ms to consider scroll as ended (increased to 2s)
+    const scrollLocked = { current: false } as { current: boolean };
+    let scrollEndTimer: number | null = null;
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (isTransitioning.current) return;
+
+      // If locked due to an ongoing gesture, ignore further wheel events
+      if (scrollLocked.current || isTransitioning.current) {
+        // Reset end timer so lock only releases after no wheel for SCROLL_END_DELAY
+        if (scrollEndTimer) clearTimeout(scrollEndTimer);
+        scrollEndTimer = window.setTimeout(() => {
+          scrollLocked.current = false;
+          scrollEndTimer = null;
+        }, SCROLL_END_DELAY);
+        return;
+      }
 
       scrollAccumulator.current += e.deltaY;
 
       if (Math.abs(scrollAccumulator.current) > SCROLL_THRESHOLD) {
+        // Lock further scroll-triggered changes until user stops scrolling
+        scrollLocked.current = true;
+        if (scrollEndTimer) { clearTimeout(scrollEndTimer); scrollEndTimer = null; }
+
         isTransitioning.current = true;
 
         const direction = scrollAccumulator.current > 0 ? 1 : -1;
@@ -198,18 +416,32 @@ export default function InfinitusViewer(): JSX.Element {
         if (next >= MEDIA.length) next = 0;
         if (next < 0) next = MEDIA.length - 1;
 
+        // Hide windows one-by-one instantly (staggered) so they disappear individually at the start of the transition
+        hideWindowsStaggered(70);
+
         smoothMediaTransition(next);
         currentImage.current = next;
         scrollAccumulator.current = 0;
 
         setTimeout(() => {
+          // After the media transition completes, respawn windows in new random spots
+          spawnWindows();
           isTransitioning.current = false;
+
+          // Start end timer which will unlock scroll after the user stops scrolling for some time
+          scrollEndTimer = window.setTimeout(() => {
+            scrollLocked.current = false;
+            scrollEndTimer = null;
+          }, SCROLL_END_DELAY);
         }, 650);
       }
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
-    return () => window.removeEventListener("wheel", onWheel);
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      if (scrollEndTimer) clearTimeout(scrollEndTimer);
+    };
   }, []);
 
   /* ================= MOUNT ================= */
@@ -220,6 +452,27 @@ export default function InfinitusViewer(): JSX.Element {
 
   return (
     <>
+      {/* SVG Filter for Frosted Glass Effect */}
+      <svg className="absolute w-0 h-0">
+        <defs>
+          <filter id="frosted-glass">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.04"
+              numOctaves="3"
+              result="noise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale="6"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+        </defs>
+      </svg>
+
       {/* Header */}
       <div 
         className="fixed top-0 left-0 w-full flex justify-between items-center z-[9998] pointer-events-auto"

@@ -10,9 +10,9 @@ interface NoiseProps {
 
 const Noise: React.FC<NoiseProps> = ({
   patternSize = 500,
-  patternScaleX = 5,
-  patternScaleY = 5,
-  patternRefreshInterval = 1,
+  patternScaleX = 1,
+  patternScaleY = 1,
+  patternRefreshInterval = 10,
   patternAlpha = 255
 }) => {
   const grainRef = useRef<HTMLCanvasElement | null>(null);
