@@ -32,44 +32,52 @@ export default function InfinitusViewer(): JSX.Element {
 
   /* ================= IMAGE TRANSITION ================= */
 
- function smoothMediaTransition(nextIndex: number) {
-  windowsRef.current.forEach((win) => {
-    const view = win.querySelector(".window-view") as HTMLDivElement;
+  function smoothMediaTransition(nextIndex: number) {
+    windowsRef.current.forEach((win) => {
+      const view = win.querySelector(".window-view") as HTMLDivElement;
 
-    gsap.to(view, {
-      opacity: 0,
-      duration: 0.3,
-      ease: "power2.out",
-      onComplete: () => {
-        const media = MEDIA[nextIndex];
-        
-        // Remove existing content
-        view.innerHTML = "";
-        
-        if (media.type === "video") {
-          const video = document.createElement("video");
-          video.src = media.src;
-          video.autoplay = true;
-          video.loop = true;
-          video.muted = true;
-          video.style.width = "100%";
-          video.style.height = "100%";
-          video.style.objectFit = "cover";
-          view.appendChild(video);
-        } else {
-          view.style.backgroundImage = `url(${media.src})`;
-        }
+      gsap.to(view, {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.out",
+        onComplete: () => {
+          const media = MEDIA[nextIndex];
+          
+          // Remove existing content
+          view.innerHTML = "";
+          
+          if (media.type === "video") {
+            const video = document.createElement("video");
+            video.src = media.src;
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.style.width = "100%";
+            video.style.height = "100%";
+            video.style.objectFit = "cover";
+            view.appendChild(video);
+          } else {
+            view.style.backgroundImage = `url(${media.src})`;
+          }
 
-        gsap.to(view, {
-          opacity: 1,
-          duration: 0.3,
-          ease: "power2.out",
-        });
-      },
+          gsap.to(view, {
+            opacity: 1,
+            duration: 0.3,
+            ease: "power2.out",
+          });
+        },
+      });
     });
-  });
-}
+  }
 
+  /* ================= UPDATE COORDINATES ================= */
+
+  function updateCoordinates(win: HTMLDivElement, x: number, y: number) {
+    const header = win.querySelector(".window-header") as HTMLDivElement;
+    if (header) {
+      header.textContent = `x: ${Math.round(x)}, y: ${Math.round(y)}`;
+    }
+  }
 
   /* ================= CREATE WINDOW ================= */
 
@@ -94,7 +102,7 @@ export default function InfinitusViewer(): JSX.Element {
     const media = MEDIA[currentImage.current];
     
     win.innerHTML = `
-      <div class="window-header">Infinitus 26</div>
+      <div class="window-header">x: ${Math.round(x)}, y: ${Math.round(y)}</div>
       <div class="window-content">
         <div class="window-view"></div>
       </div>
@@ -147,6 +155,7 @@ export default function InfinitusViewer(): JSX.Element {
       inertia: false,
       onDrag() {
         gsap.set(view, { x: -this.x, y: -this.y });
+        updateCoordinates(win, this.x, this.y);
       },
     });
   }
@@ -208,18 +217,21 @@ export default function InfinitusViewer(): JSX.Element {
 
   return (
     <>
-      {/* <div className="header">
-        <div className="logo">INFINITUS</div>
-        <div className="menu-icon">
-          <span />
-          <span />
-          <span />
-        </div>
-      </div> */}
+      
 
-      <div className="container" ref={containerRef}>
-        <div className="location-bottom">Amaravati, IN</div>
-        <div className="coordinates-vertical">
+      <div 
+        className="relative w-full h-[calc(100vh-60px)] overflow-hidden bg-black" 
+        ref={containerRef}
+        style={{
+          backgroundImage: "url(/assets/landing.jpeg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute left-5 bottom-[15px] text-sm text-white/70">
+          Amaravati, IN
+        </div>
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 rotate-[-90deg] origin-center text-sm text-white/70 whitespace-nowrap tracking-wider">
           16.433"N, 80.550"E
         </div>
       </div>
