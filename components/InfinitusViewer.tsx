@@ -222,20 +222,21 @@ export default function InfinitusViewer(): JSX.Element {
     <>
       {/* Header */}
       <div 
-        className="fixed top-0 left-0 w-full flex justify-between items-center z-[10000] pointer-events-auto"
+        className="fixed top-0 left-0 w-full flex justify-between items-center z-[9998] pointer-events-auto"
         style={{ padding: '32px 48px' }}
       >
         <div className="text-base tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Climate Crisis", sans-serif' }}>
           INFINITUS
         </div>
         <button
-          className="bg-transparent border-none cursor-pointer flex flex-col gap-1 hover:opacity-70 transition-opacity"
+          className="absolute right-0 bg-transparent border-none cursor-pointer flex flex-col gap-1.5 hover:opacity-70 transition-opacity"
+          style={{ right: '48px' }}
           onClick={() => setMenuOpen(true)}
           aria-label="Open menu"
         >
-          <span className="block h-[4px] w-8 bg-white" />
-          <span className="block h-[4px] w-8 bg-white" />
-          <span className="block h-[4px] w-8 bg-white" />
+          <span className="block h-[4px] w-18 bg-white" />
+          <span className="block h-[4px] w-18 bg-white" />
+          {/* <span className="block h-[4px] w-8 bg-white" /> */}
         </button>
       </div>
 
