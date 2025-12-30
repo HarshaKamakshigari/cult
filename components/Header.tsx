@@ -25,7 +25,7 @@ export default function Header({ onMenuClick }: HeaderProps): JSX.Element {
         }
       `}</style>
 
-      <header className="fixed top-0 left-0 w-full px-10 py-7 flex justify-between items-center z-[10000] pointer-events-auto mix-blend-difference md:px-6 md:py-[22px]">
+      <header className="fixed top-0 left-0 w-full px-10 py-7 flex justify-between items-center z-[10000] pointer-events-auto md:px-6 md:py-[22px] bg-transparent">
         <div className="flex items-center">
           <span className="text-base tracking-[0.35em] font-medium text-white cursor-default md:text-sm md:tracking-[0.28em]">
             INFINITUS

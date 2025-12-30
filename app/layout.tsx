@@ -94,27 +94,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Load Anton font with display=swap for better performance */}
         <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+        {/* Load Climate Crisis font for INFINITUS text */}
+        <link href="https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1979&display=swap" rel="stylesheet" />
       </head>
       <body>
-        {/* ================================================================ */}
-        {/* GLOBAL HEADER - Persistent across all pages                     */}
-        {/* ================================================================ */}
-        {/* Fixed header containing logo and hamburger menu icon */}
-        <div className="header">
-          {/* Application logo/title */}
-          <div className="logo">INFINITUS</div>
-
-          {/* Hamburger menu icon - opens the full-screen menu overlay */}
-          <div
-            className="menu-icon"
-            onClick={() => setMenuOpen(true)}
-          >
-            <span /> {/* Top bar */}
-            <span /> {/* Middle bar */}
-            <span /> {/* Bottom bar */}
-          </div>
-        </div>
-
         {/* ================================================================ */}
         {/* FULL-SCREEN MENU OVERLAY                                        */}
         {/* ================================================================ */}

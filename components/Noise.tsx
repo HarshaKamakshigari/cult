@@ -1,6 +1,4 @@
-import type React from 'react';
-import { useRef, useEffect } from 'react';
-import './Noise.css';
+import React, { useRef, useEffect } from 'react';
 
 interface NoiseProps {
   patternSize?: number;
@@ -28,6 +26,7 @@ const Noise: React.FC<NoiseProps> = ({
 
     let frame = 0;
     let animationId: number;
+
     const canvasSize = 1024;
 
     const resize = () => {
@@ -72,7 +71,15 @@ const Noise: React.FC<NoiseProps> = ({
     };
   }, [patternSize, patternScaleX, patternScaleY, patternRefreshInterval, patternAlpha]);
 
-  return <canvas className="noise-overlay" ref={grainRef} style={{ imageRendering: 'pixelated' }} />;
+  return (
+    <canvas
+      className="pointer-events-none absolute top-0 left-0 h-screen w-screen"
+      ref={grainRef}
+      style={{
+        imageRendering: 'pixelated'
+      }}
+    />
+  );
 };
 
 export default Noise;

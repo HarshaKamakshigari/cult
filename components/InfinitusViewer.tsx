@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import Draggable from "gsap/Draggable";
 import InertiaPlugin from "gsap/InertiaPlugin";
 import Noise from "./Noise";
+import MenuOverlay from "./MenuOverlay";
 
 gsap.registerPlugin(Draggable, InertiaPlugin);
 
@@ -22,6 +23,7 @@ const MEDIA: MediaItem[] = [
 ];
 
 export default function InfinitusViewer(): JSX.Element {
+  const [menuOpen, setMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const windowsRef = useRef<HTMLDivElement[]>([]);
 
@@ -218,10 +220,30 @@ export default function InfinitusViewer(): JSX.Element {
 
   return (
     <>
-      
+      {/* Header */}
+      <div 
+        className="fixed top-0 left-0 w-full flex justify-between items-center z-[10000] pointer-events-auto"
+        style={{ padding: '32px 48px' }}
+      >
+        <div className="text-base tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Climate Crisis", sans-serif' }}>
+          INFINITUS
+        </div>
+        <button
+          className="bg-transparent border-none cursor-pointer flex flex-col gap-1 hover:opacity-70 transition-opacity"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+        >
+          <span className="block h-[4px] w-8 bg-white" />
+          <span className="block h-[4px] w-8 bg-white" />
+          <span className="block h-[4px] w-8 bg-white" />
+        </button>
+      </div>
+
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <div 
-        className="relative w-full h-[calc(100vh-60px)] overflow-hidden bg-black" 
+        className="relative w-full h-screen overflow-hidden bg-black" 
         ref={containerRef}
       >
         <div 
