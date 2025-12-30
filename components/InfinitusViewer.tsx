@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import Draggable from "gsap/Draggable";
 import InertiaPlugin from "gsap/InertiaPlugin";
+import Noise from "./Noise";
 
 gsap.registerPlugin(Draggable, InertiaPlugin);
 
@@ -222,12 +223,23 @@ export default function InfinitusViewer(): JSX.Element {
       <div 
         className="relative w-full h-[calc(100vh-60px)] overflow-hidden bg-black" 
         ref={containerRef}
-        style={{
-          backgroundImage: "url(/assets/landing.jpeg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
       >
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "url(/images/hero_background.png)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: 0.4,
+          }}
+        />
+        <Noise
+          patternSize={250}
+          patternScaleX={1}
+          patternScaleY={1}
+          patternRefreshInterval={2}
+          patternAlpha={15}
+        />
         <div className="absolute left-5 bottom-[15px] text-sm text-white/70">
           Amaravati, IN
         </div>
