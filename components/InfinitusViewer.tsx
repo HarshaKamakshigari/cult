@@ -478,7 +478,7 @@ export default function InfinitusViewer(): JSX.Element {
         className="fixed top-0 left-0 w-full flex justify-between items-center z-[9998] pointer-events-auto"
         style={{ padding: '32px 48px' }}
       >
-        <div className="text-base tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Climate Crisis", sans-serif' }}>
+        <div className="text-lg md:text-xl tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Climate Crisis", sans-serif' }}>
           INFINITUS
         </div>
         <button
