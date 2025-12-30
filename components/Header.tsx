@@ -1,10 +1,12 @@
 "use client";
 
+import React from 'react';
+
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
-export default function Header({ onMenuClick }: HeaderProps): JSX.Element {
+export default function Header({ onMenuClick }: HeaderProps): React.JSX.Element {
   return (
     <>
       <style jsx>{`

@@ -538,7 +538,7 @@ export default function MenuOverlay({
                 {LINKS.map((text, i) => (
                   <div
                     key={`hover-${i}`}
-                    ref={(el) => (hoverImageRefs.current[i] = el)}
+                    ref={(el) => { hoverImageRefs.current[i] = el; }}
                     className="hover-image"
                     onMouseEnter={() => handleMouseEnter(i)}
                     onMouseLeave={() => handleMouseLeave(i)}
