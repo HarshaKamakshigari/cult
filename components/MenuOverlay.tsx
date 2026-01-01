@@ -54,24 +54,38 @@ function createTextTexture(text: string, color: string = "white"): THREE.CanvasT
   }
   
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { alpha: true });
+  const ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: false });
   
   if (!ctx) {
     throw new Error("Could not get 2D context");
   }
   
-  // Reduced canvas size for better performance
-  canvas.width = 512;
-  canvas.height = 128;
+  // Higher resolution for crisp text (using device pixel ratio)
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const baseWidth = 1024;
+  const baseHeight = 256;
+  canvas.width = baseWidth * dpr;
+  canvas.height = baseHeight * dpr;
   
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "400 60px Anton";
+  // Scale context to account for DPR
+  ctx.scale(dpr, dpr);
+  
+  ctx.clearRect(0, 0, baseWidth, baseHeight);
+  
+  // Enable text antialiasing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  
+  ctx.font = "400 120px Anton";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = color;
-  ctx.fillText(text.toUpperCase(), 90, canvas.height / 2);
+  ctx.fillText(text.toUpperCase(), 250, baseHeight / 2);
   
   const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearMipMapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
   texture.needsUpdate = true;
   
   textureCache.set(cacheKey, texture);
@@ -105,7 +119,7 @@ const StretchItem: React.FC<StretchItemProps> = ({
   const meshRef = useRef<THREE.Mesh>(null);
   const { viewport } = useThree();
   
-  // Cache textures
+  // Cache textures - recreate on each hover state change
   const whiteTexture = useMemo(() => createTextTexture(text, "white"), [text]);
   const redTexture = useMemo(() => createTextTexture(text, "#ff0000"), [text]);
   
@@ -119,6 +133,8 @@ const StretchItem: React.FC<StretchItemProps> = ({
     if (!meshRef.current) return;
 
     const material = meshRef.current.material as THREE.ShaderMaterial;
+    
+    // Update texture based on hover state - force update
     material.uniforms.uTexture.value = isHovered ? redTexture : whiteTexture;
 
     const velocity = velocityRef.current;
@@ -300,38 +316,50 @@ export default function MenuOverlay({
 
   /* ================= OPTIMIZED HOVER EFFECTS ================= */
 
-  const handleMouseEnter = (index: number) => {
+  const handleHoverChange = (index: number | null) => {
     if (isMobile) return;
+    
+    // Only allow hover when velocity is low (scroll is slow or stopped)
+    if (index !== null && Math.abs(velocity.current) >= 5) {
+      return; // Ignore hover during fast scrolling
+    }
+    
     setHoveredIndex(index);
     
-    const hoverImg = hoverImageRefs.current[index];
-    if (hoverImg) {
-      // Simple, performant animation
-      gsap.killTweensOf(hoverImg);
-      gsap.set(hoverImg, { scale: 0, opacity: 0 });
-      
-      gsap.to(hoverImg, {
-        scale: 1,
-        opacity: 1,
-        duration: 0.3,
-        ease: "power2.out"
+    if (index !== null) {
+      const hoverImg = hoverImageRefs.current[index];
+      if (hoverImg) {
+        gsap.killTweensOf(hoverImg);
+        gsap.set(hoverImg, { scale: 0, opacity: 0 });
+        
+        gsap.to(hoverImg, {
+          scale: 1,
+          opacity: 1,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      }
+    } else {
+      // Clear all hover images
+      hoverImageRefs.current.forEach(hoverImg => {
+        if (hoverImg) {
+          gsap.to(hoverImg, {
+            scale: 0,
+            opacity: 0,
+            duration: 0.2,
+            ease: "power2.in"
+          });
+        }
       });
     }
   };
 
+  const handleMouseEnter = (index: number) => {
+    // Deprecated - hover handled by 3D canvas now
+  };
+
   const handleMouseLeave = (index: number) => {
-    if (isMobile) return;
-    setHoveredIndex(null);
-    
-    const hoverImg = hoverImageRefs.current[index];
-    if (hoverImg) {
-      gsap.to(hoverImg, {
-        scale: 0,
-        opacity: 0,
-        duration: 0.2,
-        ease: "power2.in"
-      });
-    }
+    // Deprecated - hover handled by 3D canvas now
   };
 
   const startAnimation = () => {
@@ -501,6 +529,9 @@ export default function MenuOverlay({
   return (
     <>
       <div ref={overlayRef} className="menu" style={{ display: 'none' }}>
+        {/* Red vertical strip on left edge */}
+        <div className="red-strip"></div>
+        
         <div className="menu-left">
           {isMobile ? (
             <div className="menu-column">
@@ -528,7 +559,7 @@ export default function MenuOverlay({
                   itemHeight={ITEM_HEIGHT}
                   loopHeight={LOOP_HEIGHT}
                   hoveredIndex={hoveredIndex}
-                  onHover={setHoveredIndex}
+                  onHover={handleHoverChange}
                   onClose={onClose}
                 />
               </Canvas>
@@ -540,8 +571,6 @@ export default function MenuOverlay({
                     key={`hover-${i}`}
                     ref={(el) => { hoverImageRefs.current[i] = el; }}
                     className="hover-image"
-                    onMouseEnter={() => handleMouseEnter(i)}
-                    onMouseLeave={() => handleMouseLeave(i)}
                   />
                 ))}
               </div>
@@ -607,6 +636,16 @@ export default function MenuOverlay({
           cursor: grabbing;
         }
 
+        .red-strip {
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: 8px;
+          height: 100%;
+          background: #ff0000;
+          z-index: 10001;
+        }
+
         .menu-left {
           width: 40%;
           height: 100%;
@@ -646,7 +685,7 @@ export default function MenuOverlay({
           border-radius: 4px;
           transform: translateY(-50%) scale(0);
           opacity: 0;
-          pointer-events: auto;
+          pointer-events: none;
           will-change: transform, opacity;
         }
 
