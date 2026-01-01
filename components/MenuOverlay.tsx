@@ -582,7 +582,7 @@ export default function MenuOverlay({
         )}
 
         <button className="menu-close" onClick={onClose}>
-          CLOSE
+          <h1>CLOSE</h1>
         </button>
       </div>
 

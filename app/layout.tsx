@@ -86,38 +86,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* ================================================================ */}
-        {/* FONT PRELOADING - Anton from Google Fonts                        */}
-        {/* ================================================================ */}
-        {/* Preconnect to Google Fonts for faster font loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Load Anton font with display=swap for better performance */}
         <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
-        {/* Load Climate Crisis font for INFINITUS text */}
         <link href="https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1979&display=swap" rel="stylesheet" />
-        {/* Load Share Tech Mono font for window headers - sci-fi monospace style */}
         <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
       </head>
       <body>
-        {/* ================================================================ */}
-        {/* FULL-SCREEN MENU OVERLAY                                        */}
-        {/* ================================================================ */}
-        {/* 
-          MenuOverlay Component:
-          - Renders a full-screen menu with 3D text effects (desktop)
-          - Uses velocity-based stretch shaders for dynamic text distortion
-          - Includes smooth scrolling with physics-based animation
-          - Mobile-responsive with simplified layout
-        */}
+       
         <MenuOverlay
           isOpen={menuOpen}
           onClose={() => setMenuOpen(false)}
         />
 
-        {/* ================================================================ */}
-        {/* PAGE CONTENT - Rendered from child routes                       */}
-        {/* ================================================================ */}
         {children}
       </body>
     </html>
