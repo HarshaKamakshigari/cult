@@ -919,12 +919,12 @@ export default function InfinitusViewer(): React.JSX.Element {
           INFINITUS
         </div>
         <button
-          className="bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity z-[41]"
-          style={{ marginRight: '32px' }}
+          className="bg-transparent border-none cursor-pointer transition-all duration-200 z-[41] text-white hover:!text-[#ff0000]"
+          style={{ marginRight: '32px', fontSize: '1rem', letterSpacing: '0.25em', fontFamily: 'monospace' }}
           onClick={() => setMenuOpen(true)}
           aria-label="Open menu"
         >
-          <span className="text-white text-xl" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>Menu</span>
+          MENU
         </button>
       </div>
 
