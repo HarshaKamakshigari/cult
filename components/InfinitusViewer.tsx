@@ -508,6 +508,7 @@ const MEDIA: MediaItem[] = [
 
 export default function InfinitusViewer(): React.JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const windowsRef = useRef<HTMLDivElement[]>([]);
 
@@ -861,6 +862,7 @@ export default function InfinitusViewer(): React.JSX.Element {
 
         smoothMediaTransition(next);
         currentImage.current = next;
+        setActiveIndex(next);
         scrollAccumulator.current = 0;
 
         setTimeout(() => {
@@ -913,16 +915,16 @@ export default function InfinitusViewer(): React.JSX.Element {
         className="fixed top-0 left-0 w-full flex justify-between items-center z-[40] pointer-events-auto"
         style={{ padding: '32px 48px' }}
       >
-        <div className="text-lg md:text-xl tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Climate Crisis", sans-serif' }}>
+        <div className="text-lg md:text-xl tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Monument Extended", "Climate Crisis", sans-serif', fontWeight: 800 }}>
           INFINITUS
         </div>
         <button
-          className="absolute right-0 bg-transparent border-none cursor-pointer flex flex-col gap-1.5 hover:text-red-500 transition-opacity z-[41]"
-          style={{ right: '48px' }}
+          className="bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity z-[41]"
+          style={{ marginRight: '32px' }}
           onClick={() => setMenuOpen(true)}
           aria-label="Open menu"
         >
-          <h1>Menu</h1>
+          <span className="text-white text-xl" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>Menu</span>
         </button>
       </div>
 
@@ -930,7 +932,7 @@ export default function InfinitusViewer(): React.JSX.Element {
       <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <div 
-        className="relative w-full h-screen overflow-hidden bg-black" 
+        className="relative w-full h-screen overflow-hidden bg-[#080808]" 
         ref={containerRef}
       >
         <div 
@@ -939,9 +941,13 @@ export default function InfinitusViewer(): React.JSX.Element {
             backgroundImage: "url(/images/hero_background.png)",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            opacity: 0.4,
+            opacity: 0.3,
           }}
         />
+        {/* Dark overlay layers */}
+        <div className="absolute inset-0 bg-black/25" />
+        <div className="absolute inset-0 bg-black/25" />
+        
         <Noise
           patternSize={250}
           patternScaleX={1}
@@ -950,17 +956,52 @@ export default function InfinitusViewer(): React.JSX.Element {
           patternAlpha={15}
         />
         
-        {/* Bottom Left Content - Added as per image */}
-        <div className="fixed left-12 bottom-0 z-[30] pointer-events-auto p-8">
-          <div className="flex flex-col items-start gap-4" style={{ marginBottom: '30px' }}>
-            {/* Fest Title */}
-            <div className="text-white uppercase tracking-[0.2em] leading-tight mb-6" >
-              <div className="text-4xl md:text-5xl font-light" style={{ fontFamily: '"Climate Crisis", sans-serif', marginBottom: '10px' }} >
-                NATIONAL
-              </div>
-              <div className="text-4xl md:text-5xl font-bold ml-6" style={{ fontFamily: '"Climate Crisis", sans-serif' }}>
-                TECHNO<span className='text-red-500'>-</span>CULTURAL FEST<span className='text-red-500'>'</span>26
-              </div>
+        {/* Bottom Left Content */}
+        <div className="fixed left-12 bottom-20 z-[30] pointer-events-auto p-8">
+          <div className="flex flex-col items-start" style={{ marginBottom: '30px' }}>
+            {/* NATIONAL */}
+            <div 
+              className="text-[#9c0808]"
+              style={{ 
+                fontFamily: '"Share Tech Mono", monospace', 
+                fontSize: '54px',
+                fontWeight: 10000,
+                lineHeight: '1',
+                marginBottom: '4px',
+                textShadow: '0.5px 0 0 currentColor, -0.5px 0 0 currentColor'
+              }}
+            >
+              NATIONAL
+            </div>
+            
+            {/* TECHNO-CULTURAL */}
+            <div 
+              className="text-white"
+              style={{ 
+                fontFamily: '"Monument Extended", "Bebas Neue", "Space Grotesk", sans-serif', 
+                fontSize: '86px',
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                lineHeight: '0.9',
+                marginBottom: '12px'
+              }}
+            >
+              TECHNO-CULTURAL
+            </div>
+            
+            {/* FEST'26 */}
+            <div 
+              className="text-white"
+              style={{ 
+                fontFamily: '"Monument Extended", "Bebas Neue", "Space Grotesk", sans-serif', 
+                fontSize: '86px',
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                lineHeight: '0.9',
+                marginBottom: '30px'
+              }}
+            >
+              FEST<span className="text-[#9c0808]">'</span>26
             </div>
            
             <button
@@ -968,7 +1009,8 @@ export default function InfinitusViewer(): React.JSX.Element {
               style={{ 
                 fontFamily: '"Space Grotesk", sans-serif', 
                 letterSpacing: '0.1em',
-                padding: '10px 20px'
+                padding: '10px 40px',
+                fontSize: '18px'
               }}
               onClick={() => {
                 window.open('https://register.infinitus.com', '_blank');
@@ -979,11 +1021,53 @@ export default function InfinitusViewer(): React.JSX.Element {
           </div>
         </div>
         
-        <div className="absolute right-12 bottom-[15px] text-sm text-white/70 z-[30]">
+        {/* Bottom Right - Amaravati Location */}
+        <div 
+          className="fixed right-[100px] bottom-[80px] z-[30] text-sm md:text-base"
+          style={{ 
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 400,
+            background: 'linear-gradient(to left, rgba(153,153,153,0.75), #ffffff)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        >
           Amaravati, IN
         </div>
-        <div className="absolute right-0 top-1/2 z-[30] -translate-y-1/2 rotate-[-90deg] origin-center text-sm text-white/70 whitespace-nowrap tracking-wider">
-          16.433"<span className='text-red-500'>N</span>, 80.550"<span className='text-red-500'>E</span>
+        
+        {/* Right Side Coordinates - Vertical */}
+        <div 
+          className="fixed top-1/2 z-[30] -translate-y-1/2"
+          style={{ 
+            right: '1.5%',
+            transform: 'translateY(-50%) rotate(-90deg)', 
+            transformOrigin: 'center center' 
+          }}
+        >
+          <div 
+            className="text-sm md:text-base whitespace-nowrap"
+            style={{ fontFamily: '"JetBrains Mono", "Space Grotesk", monospace', fontWeight: 400 }}
+          >
+            <span className="text-[#d1d1d1]">16.433</span>
+            <span className="text-[#b90909]">°N, </span>
+            <span className="text-[#d1d1d1]">80.550</span>
+            <span className="text-[#b90909]">°E</span>
+          </div>
+        </div>
+        
+        {/* Scroll Indicators */}
+        <div className="fixed left-1/2 bottom-[40px] -translate-x-1/2 z-[30] flex items-center gap-[178px]">
+          {MEDIA.map((_, index) => (
+            <div 
+              key={index}
+              className={`w-[10px] h-[10px] transition-all duration-300 ${
+                activeIndex === index 
+                  ? 'bg-[#d9d9d9]' 
+                  : 'bg-[rgba(217,217,217,0.49)]'
+              }`}
+            />
+          ))}
         </div>
       </div>
     </>
