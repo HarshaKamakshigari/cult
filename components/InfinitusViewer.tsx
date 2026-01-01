@@ -1057,14 +1057,14 @@ export default function InfinitusViewer(): React.JSX.Element {
         </div>
         
         {/* Scroll Indicators */}
-        <div className="fixed left-1/2 bottom-[40px] -translate-x-1/2 z-[30] flex items-center gap-[178px]">
+        <div className="fixed right-[20px] top-1/2 -translate-y-1/2 z-[30] flex flex-col items-end gap-2.5">
           {MEDIA.map((_, index) => (
             <div 
               key={index}
-              className={`w-[10px] h-[10px] transition-all duration-300 ${
+              className={`transition-all duration-500 ${
                 activeIndex === index 
-                  ? 'bg-[#d9d9d9]' 
-                  : 'bg-[rgba(217,217,217,0.49)]'
+                  ? 'w-[35px] h-[1.5px] bg-white' 
+                  : 'w-[20px] h-[1.5px] bg-white/30'
               }`}
             />
           ))}
