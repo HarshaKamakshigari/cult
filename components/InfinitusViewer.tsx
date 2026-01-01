@@ -912,7 +912,7 @@ export default function InfinitusViewer(): React.JSX.Element {
 
       {/* Header */}
       <div 
-        className="fixed top-0 left-0 w-full flex justify-between items-center z-[40] pointer-events-auto"
+        className="fixed top-0 left-0 w-full flex justify-between items-center z-[40] pointer-events-auto select-none"
         style={{ padding: '32px 48px' }}
       >
         <div className="text-lg md:text-xl tracking-[0.1em] font-medium text-white cursor-default" style={{ fontFamily: '"Monument Extended", "Climate Crisis", sans-serif', fontWeight: 800 }}>
@@ -932,7 +932,7 @@ export default function InfinitusViewer(): React.JSX.Element {
       <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <div 
-        className="relative w-full h-screen overflow-hidden bg-[#080808]" 
+        className="relative w-full h-screen overflow-hidden bg-[#080808] select-none" 
         ref={containerRef}
       >
         <div 
@@ -941,7 +941,7 @@ export default function InfinitusViewer(): React.JSX.Element {
             backgroundImage: "url(/images/hero_background.png)",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            opacity: 0.3,
+            opacity: 0.4,
           }}
         />
         {/* Dark overlay layers */}
@@ -957,7 +957,7 @@ export default function InfinitusViewer(): React.JSX.Element {
         />
         
         {/* Bottom Left Content */}
-        <div className="fixed left-12 bottom-20 z-[30] pointer-events-auto p-8">
+        <div className="fixed left-12 bottom-20 z-[30] pointer-events-none p-8">
           <div className="flex flex-col items-start" style={{ marginBottom: '30px' }}>
             {/* NATIONAL */}
             <div 
@@ -1005,7 +1005,7 @@ export default function InfinitusViewer(): React.JSX.Element {
             </div>
            
             <button
-              className="mt-6 bg-red-700 text-white font-semibold tracking-wider text-lg uppercase hover:bg-white hover:text-black transition-all duration-300"
+              className="mt-6 bg-red-700 text-white font-semibold tracking-wider text-lg uppercase hover:bg-white hover:text-black transition-all duration-300 pointer-events-auto"
               style={{ 
                 fontFamily: '"Space Grotesk", sans-serif', 
                 letterSpacing: '0.1em',
