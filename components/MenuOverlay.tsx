@@ -54,24 +54,38 @@ function createTextTexture(text: string, color: string = "white"): THREE.CanvasT
   }
   
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { alpha: true });
+  const ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: false });
   
   if (!ctx) {
     throw new Error("Could not get 2D context");
   }
   
-  // Reduced canvas size for better performance
-  canvas.width = 512;
-  canvas.height = 128;
+  // Higher resolution for crisp text (using device pixel ratio)
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const baseWidth = 1024;
+  const baseHeight = 256;
+  canvas.width = baseWidth * dpr;
+  canvas.height = baseHeight * dpr;
   
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "400 60px Anton";
+  // Scale context to account for DPR
+  ctx.scale(dpr, dpr);
+  
+  ctx.clearRect(0, 0, baseWidth, baseHeight);
+  
+  // Enable text antialiasing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  
+  ctx.font = "400 120px Anton";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = color;
-  ctx.fillText(text.toUpperCase(), 90, canvas.height / 2);
+  ctx.fillText(text.toUpperCase(), 250, baseHeight / 2);
   
   const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearMipMapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
   texture.needsUpdate = true;
   
   textureCache.set(cacheKey, texture);
