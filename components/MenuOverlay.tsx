@@ -269,6 +269,7 @@ export default function MenuOverlay({
   const hoverImageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [showContent, setShowContent] = useState(false);
   const [showRedOverlay, setShowRedOverlay] = useState(false);
+  const [showRedStrip, setShowRedStrip] = useState(false);
 
   const position = useRef(0);
   const velocity = useRef(0);
@@ -307,30 +308,38 @@ export default function MenuOverlay({
       // Show red overlay first
       setShowRedOverlay(true);
       setShowContent(false);
+      setShowRedStrip(false);
 
-      // After red sweep-in completes (0.6s), show menu and trigger sweep-out immediately
+      // Start sweep-out before sweep-in completes for fluid overlap
       const timer = setTimeout(() => {
         setShowContent(true);
         if (!isMobile) startAnimation();
-        setShowRedOverlay(false); // Trigger exit immediately
-      }, 600);
+        setShowRedOverlay(false); // Trigger exit with overlap
+      }, 650); // Adjusted for new timing
+
+      // Show red strip after sweep animation completes
+      const stripTimer = setTimeout(() => {
+        setShowRedStrip(true);
+      }, 1350); // After both animations complete (650 + 700)
 
       return () => {
         clearTimeout(timer);
+        clearTimeout(stripTimer);
       };
     } else {
-      // On close: hide menu and red overlay
+      // On close: hide everything
       setShowContent(false);
       setShowRedOverlay(false);
+      setShowRedStrip(false);
       stopAnimation();
     }
   }, [isOpen, isMobile]);
 
-  // Variants for the red fill to allow different enter/exit transitions
+  // Variants for the red fill - sweep-out stops at left edge to become the strip
   const redVariants = {
     hidden: { x: "100%" },
-    visible: { x: "0%", transition: { duration: 0.6, ease: ([0.65, 0, 0.35, 1] as unknown) as any } },
-    exit: { x: "-100%", transition: { duration: 0.5, ease: ([0.85, 0, 0.15, 1] as unknown) as any } },
+    visible: { x: "0%", transition: { duration: 0.8, ease: ([0.76, 0, 0.24, 1] as unknown) as any } },
+    exit: { x: "-99.6%", transition: { duration: 0.7, ease: ([0.76, 0, 0.24, 1] as unknown) as any } },
   };
 
   /* ================= OPTIMIZED HOVER EFFECTS ================= */
@@ -756,8 +765,8 @@ export default function MenuOverlay({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-              {/* Red vertical strip on left edge */}
-              <div className="red-strip"></div>
+              {/* Red vertical strip - appears after sweep animation */}
+              {showRedStrip && <div className="red-strip"></div>}
         
         <div className="menu-left">
           {isMobile ? (
