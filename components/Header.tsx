@@ -35,11 +35,15 @@ export default function Header({ onMenuClick }: HeaderProps): React.JSX.Element 
         </div>
 
         <button
-          className="header-menu-btn bg-transparent border-none cursor-pointer text-white text-sm tracking-[0.3em] py-2 px-0 relative md:text-xs md:tracking-[0.25em]"
+          className="header-menu-btn bg-transparent border-none cursor-pointer text-white flex items-center gap-4 py-2 px-0 relative group"
           onClick={onMenuClick}
           aria-label="Open menu"
         >
-          {/* <span>MENU</span> */}
+          <span className="text-sm tracking-[0.3em] font-normal md:text-xs md:tracking-[0.25em]">Menu</span>
+          <div className="flex flex-col gap-2 w-[50px] md:w-[40px]">
+            <div className="h-[2px] bg-white transition-all duration-300 group-hover:bg-red-600" />
+            <div className="h-[2px] bg-white transition-all duration-300 group-hover:bg-red-600" />
+          </div>
         </button>
       </header>
     </>

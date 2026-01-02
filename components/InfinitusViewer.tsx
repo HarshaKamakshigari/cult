@@ -833,6 +833,9 @@ export default function InfinitusViewer(): React.JSX.Element {
     let scrollEndTimer: number | null = null;
 
     const onWheel = (e: WheelEvent) => {
+      // Don't handle scroll if menu is open
+      if (menuOpen) return;
+      
       e.preventDefault();
 
       if (scrollLocked.current || isTransitioning.current) {
@@ -882,7 +885,7 @@ export default function InfinitusViewer(): React.JSX.Element {
       window.removeEventListener("wheel", onWheel);
       if (scrollEndTimer) clearTimeout(scrollEndTimer);
     };
-  }, []);
+  }, [menuOpen]);
 
   useEffect(() => {
     setTimeout(spawnWindows, 500);

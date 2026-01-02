@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { motion, AnimatePresence } from "framer-motion";
 
 const LINKS = [
   "Home", "About", "Gallery", "Events", "Contact",
@@ -266,6 +267,9 @@ export default function MenuOverlay({
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const hoverImageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [showContent, setShowContent] = useState(false);
+  const [showRedOverlay, setShowRedOverlay] = useState(false);
+  const [showRedStrip, setShowRedStrip] = useState(false);
 
   const position = useRef(0);
   const velocity = useRef(0);
@@ -283,36 +287,60 @@ export default function MenuOverlay({
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  // Lock body scroll when menu is open
   useEffect(() => {
-    if (!overlayRef.current) return;
-
     if (isOpen) {
-      overlayRef.current.style.display = 'flex';
-      gsap.to(overlayRef.current, {
-        y: 0,
-        autoAlpha: 1,
-        duration: 1.2,
-        ease: "power3.out",
-        onStart: () => {
-          if (!isMobile) startAnimation();
-        }
-      });
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Show red overlay first
+      setShowRedOverlay(true);
+      setShowContent(false);
+      setShowRedStrip(false);
+
+      // Start sweep-out before sweep-in completes for fluid overlap
+      const timer = setTimeout(() => {
+        setShowContent(true);
+        if (!isMobile) startAnimation();
+        setShowRedOverlay(false); // Trigger exit with overlap
+      }, 650); // Adjusted for new timing
+
+      // Show red strip after sweep animation completes
+      const stripTimer = setTimeout(() => {
+        setShowRedStrip(true);
+      }, 1350); // After both animations complete (650 + 700)
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(stripTimer);
+      };
+    } else {
+      // On close: hide everything
+      setShowContent(false);
+      setShowRedOverlay(false);
+      setShowRedStrip(false);
       stopAnimation();
-      gsap.to(overlayRef.current, {
-        y: "100%",
-        autoAlpha: 0,
-        duration: 0.8,
-        delay: 0.3,
-        ease: "power3.in",
-        onComplete: () => {
-          if (overlayRef.current) {
-            overlayRef.current.style.display = 'none';
-          }
-        }
-      });
     }
   }, [isOpen, isMobile]);
+
+  // Variants for the red fill - sweep-out stops at left edge to become the strip
+  const redVariants = {
+    hidden: { x: "100%" },
+    visible: { x: "0%", transition: { duration: 0.8, ease: ([0.76, 0, 0.24, 1] as unknown) as any } },
+    exit: { x: "-99.6%", transition: { duration: 0.7, ease: ([0.76, 0, 0.24, 1] as unknown) as any } },
+  };
 
   /* ================= OPTIMIZED HOVER EFFECTS ================= */
 
@@ -412,6 +440,7 @@ export default function MenuOverlay({
     const onWheel = (e: WheelEvent) => {
       if (!isOpen) return;
       e.preventDefault();
+      e.stopPropagation(); // Stop event from reaching InfinitusViewer
       
       const now = Date.now();
       const timeDiff = now - lastWheelTime;
@@ -528,9 +557,216 @@ export default function MenuOverlay({
 
   return (
     <>
-      <div ref={overlayRef} className="menu" style={{ display: 'none' }}>
-        {/* Red vertical strip on left edge */}
-        <div className="red-strip"></div>
+      <style>{`
+        .red-fill-overlay {
+          position: fixed;
+          inset: 0;
+          background: #ff0000;
+          z-index: 10002; /* keep above the menu while sweeping */
+          pointer-events: none;
+        }
+
+        .menu {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          background: transparent;
+          z-index: 9999;
+          overflow: hidden;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+          perspective: 1000px;
+          will-change: transform, opacity;
+          cursor: grab;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        .menu:active {
+          cursor: grabbing;
+        }
+
+        .red-strip {
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: 8px;
+          height: 100%;
+          background: #ff0000;
+          z-index: 10001;
+        }
+
+        .menu-left {
+          width: 40%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          overflow: hidden;
+          user-select: none;
+          -webkit-user-select: none;
+          position: relative;
+          background: #0a0a0a;
+        }
+
+        .menu-canvas {
+          width: 100% !important;
+          height: 100% !important;
+          cursor: pointer;
+        }
+
+        .hover-images-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 10;
+        }
+
+        .hover-image {
+          position: absolute;
+          right: 5%;
+          top: 50%;
+          width: 80px;
+          height: 80px;
+          background-image: url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4");
+          background-size: cover;
+          background-position: center;
+          border-radius: 4px;
+          transform: translateY(-50%) scale(0);
+          opacity: 0;
+          pointer-events: none;
+          will-change: transform, opacity;
+        }
+
+        .menu-column {
+          position: relative;
+          width: 100%;
+          max-width: 520px;
+          padding-left: 40px;
+          contain: layout style;
+        }
+
+        .menu-item.mobile {
+          position: relative;
+          font-size: 2.3rem;
+          margin-bottom: 26px;
+          opacity: 1;
+          transform: none !important;
+          letter-spacing: 0.08em;
+          padding-right: 30px;
+          transition: color 0.2s ease;
+          color: #ffffff;
+          cursor: pointer;
+          text-transform: uppercase;
+          font-weight: 500;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+
+        .menu-item.mobile:hover {
+          color: #ff0000;
+        }
+
+        .mobile-indicator {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          width: 6px;
+          height: 6px;
+          background-color: #ff0000;
+          transform: translateY(-50%);
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .menu-item.mobile:hover .mobile-indicator {
+          opacity: 1;
+        }
+
+        .menu-right {
+          width: 60%;
+          height: 100%;
+          overflow: hidden;
+          transform: translateZ(0);
+          background: #0a0a0a;
+        }
+
+        .menu-close {
+          position: absolute;
+          top: 36px;
+          right: 44px;
+          background: transparent;
+          border: 0px solid rgba(255, 255, 255, 0.15);
+          color: #ffffff;
+          font-size: 0.8rem;
+          letter-spacing: 0.32em;
+          cursor: pointer;
+          z-index: 10000;
+          padding: 12px 24px;
+          transition: all 0.2s ease;
+          font-family: monospace;
+        }
+
+        .menu-close:hover {
+          border-color: rgba(255, 255, 255, 0.3);
+          color: #ff0000;
+        }
+
+        @media (max-width: 768px) {
+          .menu {
+            flex-direction: column;
+            padding: 120px 32px;
+            cursor: default;
+          }
+
+          .menu-left {
+            width: 100%;
+            justify-content: flex-start;
+          }
+
+          .menu-column {
+            max-width: none;
+            padding-left: 0;
+          }
+          
+          .menu-item.mobile {
+            padding-right: 0;
+          }
+          
+          .menu-close {
+            top: 24px;
+            right: 24px;
+            padding: 10px 20px;
+          }
+        }
+      `}</style>
+    
+    <AnimatePresence>
+      {showRedOverlay && (
+        <motion.div
+          key="red-overlay"
+          className="red-fill-overlay"
+          variants={redVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        />
+      )}
+      
+      {showContent && (
+        <motion.div 
+          key="menu-overlay"
+          ref={overlayRef} 
+          className="menu"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+              {/* Red vertical strip - appears after sweep animation */}
+              {showRedStrip && <div className="red-strip"></div>}
         
         <div className="menu-left">
           {isMobile ? (
@@ -610,187 +846,12 @@ export default function MenuOverlay({
           </div>
         )}
 
-        <button className="menu-close" onClick={onClose}>
-          <h1>CLOSE</h1>
-        </button>
-      </div>
-
-      <style jsx>{`
-        .menu {
-          position: fixed;
-          inset: 0;
-          display: flex;
-          background: #0a0a0a;
-          z-index: 9999;
-          overflow: hidden;
-          transform: translateZ(0);
-          backface-visibility: hidden;
-          perspective: 1000px;
-          will-change: transform, opacity;
-          cursor: grab;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-
-        .menu:active {
-          cursor: grabbing;
-        }
-
-        .red-strip {
-          position: fixed;
-          left: 0;
-          top: 0;
-          width: 8px;
-          height: 100%;
-          background: #ff0000;
-          z-index: 10001;
-        }
-
-        .menu-left {
-          width: 40%;
-          height: 100%;
-          display: flex;
-          justify-content: center;
-          overflow: hidden;
-          user-select: none;
-          -webkit-user-select: none;
-          position: relative;
-        }
-
-        .menu-left :global(canvas) {
-          width: 100% !important;
-          height: 100% !important;
-          cursor: pointer;
-        }
-
-        .hover-images-container {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          pointer-events: none;
-          z-index: 10;
-        }
-
-        .hover-image {
-          position: absolute;
-          right: 5%;
-          top: 50%;
-          width: 80px;
-          height: 80px;
-          background-image: url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4");
-          background-size: cover;
-          background-position: center;
-          border-radius: 4px;
-          transform: translateY(-50%) scale(0);
-          opacity: 0;
-          pointer-events: none;
-          will-change: transform, opacity;
-        }
-
-        .menu-column {
-          position: relative;
-          width: 100%;
-          max-width: 520px;
-          padding-left: 40px;
-          contain: layout style;
-        }
-
-        .menu-item.mobile {
-          position: relative;
-          font-size: 2.3rem;
-          margin-bottom: 26px;
-          opacity: 1;
-          transform: none !important;
-          letter-spacing: 0.08em;
-          padding-right: 30px;
-          transition: color 0.2s ease;
-          color: #ffffff;
-          cursor: pointer;
-          text-transform: uppercase;
-          font-weight: 500;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-
-        .menu-item.mobile:hover {
-          color: #ff0000;
-        }
-
-        .mobile-indicator {
-          position: absolute;
-          right: 0;
-          top: 50%;
-          width: 6px;
-          height: 6px;
-          background-color: #ff0000;
-          transform: translateY(-50%);
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        .menu-item.mobile:hover .mobile-indicator {
-          opacity: 1;
-        }
-
-        .menu-right {
-          width: 55%;
-          height: 100%;
-          overflow: hidden;
-          transform: translateZ(0);
-          background: #0a0a0a;
-        }
-
-        .menu-close {
-          position: absolute;
-          top: 36px;
-          right: 44px;
-          background: transparent;
-          border: 0px solid rgba(255, 255, 255, 0.15);
-          color: #ffffff;
-          font-size: 0.8rem;
-          letter-spacing: 0.32em;
-          cursor: pointer;
-          z-index: 10000;
-          padding: 12px 24px;
-          transition: all 0.2s ease;
-          font-family: monospace;
-        }
-
-        .menu-close:hover {
-          border-color: rgba(255, 255, 255, 0.3);
-          color: #ff0000;
-        }
-
-        @media (max-width: 768px) {
-          .menu {
-            flex-direction: column;
-            padding: 120px 32px;
-            cursor: default;
-          }
-
-          .menu-left {
-            width: 100%;
-            justify-content: flex-start;
-          }
-
-          .menu-column {
-            max-width: none;
-            padding-left: 0;
-          }
-          
-          .menu-item.mobile {
-            padding-right: 0;
-          }
-          
-          .menu-close {
-            top: 24px;
-            right: 24px;
-            padding: 10px 20px;
-          }
-        }
-      `}</style>
+              <button className="menu-close" onClick={onClose}>
+                <h1>CLOSE</h1>
+              </button>
+            </motion.div>
+      )}
+    </AnimatePresence>
     </>
   );
 }
