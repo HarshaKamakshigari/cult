@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { motion, AnimatePresence } from "framer-motion";
 
 const LINKS = [
   "Home", "About", "Gallery", "Events", "Contact",
@@ -266,6 +267,8 @@ export default function MenuOverlay({
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const hoverImageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [showContent, setShowContent] = useState(false);
+  const [showRedOverlay, setShowRedOverlay] = useState(false);
 
   const position = useRef(0);
   const velocity = useRef(0);
@@ -284,35 +287,35 @@ export default function MenuOverlay({
   }, []);
 
   useEffect(() => {
-    if (!overlayRef.current) return;
-
     if (isOpen) {
-      overlayRef.current.style.display = 'flex';
-      gsap.to(overlayRef.current, {
-        y: 0,
-        autoAlpha: 1,
-        duration: 1.2,
-        ease: "power3.out",
-        onStart: () => {
-          if (!isMobile) startAnimation();
-        }
-      });
+      // Show red overlay first
+      setShowRedOverlay(true);
+      setShowContent(false);
+
+      // After red sweep-in completes (0.6s), show menu and trigger sweep-out immediately
+      const timer = setTimeout(() => {
+        setShowContent(true);
+        if (!isMobile) startAnimation();
+        setShowRedOverlay(false); // Trigger exit immediately
+      }, 600);
+
+      return () => {
+        clearTimeout(timer);
+      };
     } else {
+      // On close: hide menu and red overlay
+      setShowContent(false);
+      setShowRedOverlay(false);
       stopAnimation();
-      gsap.to(overlayRef.current, {
-        y: "100%",
-        autoAlpha: 0,
-        duration: 0.8,
-        delay: 0.3,
-        ease: "power3.in",
-        onComplete: () => {
-          if (overlayRef.current) {
-            overlayRef.current.style.display = 'none';
-          }
-        }
-      });
     }
   }, [isOpen, isMobile]);
+
+  // Variants for the red fill to allow different enter/exit transitions
+  const redVariants = {
+    hidden: { x: "100%" },
+    visible: { x: "0%", transition: { duration: 0.6, ease: ([0.65, 0, 0.35, 1] as unknown) as any } },
+    exit: { x: "-100%", transition: { duration: 0.5, ease: ([0.85, 0, 0.15, 1] as unknown) as any } },
+  };
 
   /* ================= OPTIMIZED HOVER EFFECTS ================= */
 
@@ -528,99 +531,20 @@ export default function MenuOverlay({
 
   return (
     <>
-      <div ref={overlayRef} className="menu" style={{ display: 'none' }}>
-        {/* Red vertical strip on left edge */}
-        <div className="red-strip"></div>
-        
-        <div className="menu-left">
-          {isMobile ? (
-            <div className="menu-column">
-              {LINKS.map((text, i) => (
-                <div 
-                  key={`mobile-${i}`}
-                  className="menu-item mobile" 
-                  onClick={onClose}
-                >
-                  {text}
-                  <div className="mobile-indicator"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              <Canvas 
-                camera={{ position: [0, 0, 5], fov: 50 }}
-                dpr={[1, 1.5]}
-                performance={{ min: 0.5 }}
-              >
-                <StretchScene 
-                  velocityRef={velocity}
-                  positionRef={position}
-                  itemHeight={ITEM_HEIGHT}
-                  loopHeight={LOOP_HEIGHT}
-                  hoveredIndex={hoveredIndex}
-                  onHover={handleHoverChange}
-                  onClose={onClose}
-                />
-              </Canvas>
-              
-              {/* Hover images overlay */}
-              <div className="hover-images-container">
-                {LINKS.map((text, i) => (
-                  <div
-                    key={`hover-${i}`}
-                    ref={(el) => { hoverImageRefs.current[i] = el; }}
-                    className="hover-image"
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+      <style>{`
+        .red-fill-overlay {
+          position: fixed;
+          inset: 0;
+          background: #ff0000;
+          z-index: 10002; /* keep above the menu while sweeping */
+          pointer-events: none;
+        }
 
-        {!isMobile && (
-          <div className="menu-right flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center gap-8 w-[100%]">
-              {/* Video Section */}
-              <div className="w-full h-[70vh] relative overflow-hidden rounded-lg">
-                <video 
-                  className="w-full h-full object-cover"
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
-                >
-                  <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                </video>
-              </div>
-              
-              {/* Options Below Video */}
-              <div className="flex items-center justify-center gap-6" style={{fontFamily:'monospace'}}>
-                <button className="px-6 py-3 bg-transparent  text-white text-sm tracking-widest hover:border-white/40 hover:text-red-500 transition-all duration-300">
-                  OPTION 01
-                </button>
-                <button className="px-6 py-3 bg-transparent  text-white text-sm tracking-widest hover:border-white/40 hover:text-red-500 transition-all duration-300">
-                  OPTION 02
-                </button>
-                <button className="px-6 py-3 bg-transparent  text-white text-sm tracking-widest hover:border-white/40 hover:text-red-500 transition-all duration-300">
-                  OPTION 03
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button className="menu-close" onClick={onClose}>
-          <h1>CLOSE</h1>
-        </button>
-      </div>
-
-      <style jsx>{`
         .menu {
           position: fixed;
           inset: 0;
           display: flex;
-          background: #0a0a0a;
+          background: transparent;
           z-index: 9999;
           overflow: hidden;
           transform: translateZ(0);
@@ -655,9 +579,10 @@ export default function MenuOverlay({
           user-select: none;
           -webkit-user-select: none;
           position: relative;
+          background: #0a0a0a;
         }
 
-        .menu-left :global(canvas) {
+        .menu-left canvas {
           width: 100% !important;
           height: 100% !important;
           cursor: pointer;
@@ -791,6 +716,116 @@ export default function MenuOverlay({
           }
         }
       `}</style>
+    
+    <AnimatePresence>
+      {showRedOverlay && (
+        <motion.div
+          key="red-overlay"
+          className="red-fill-overlay"
+          variants={redVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        />
+      )}
+      
+      {showContent && (
+        <motion.div 
+          key="menu-overlay"
+          ref={overlayRef} 
+          className="menu"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+              {/* Red vertical strip on left edge */}
+              <div className="red-strip"></div>
+        
+        <div className="menu-left">
+          {isMobile ? (
+            <div className="menu-column">
+              {LINKS.map((text, i) => (
+                <div 
+                  key={`mobile-${i}`}
+                  className="menu-item mobile" 
+                  onClick={onClose}
+                >
+                  {text}
+                  <div className="mobile-indicator"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <Canvas 
+                camera={{ position: [0, 0, 5], fov: 50 }}
+                dpr={[1, 1.5]}
+                performance={{ min: 0.5 }}
+              >
+                <StretchScene 
+                  velocityRef={velocity}
+                  positionRef={position}
+                  itemHeight={ITEM_HEIGHT}
+                  loopHeight={LOOP_HEIGHT}
+                  hoveredIndex={hoveredIndex}
+                  onHover={handleHoverChange}
+                  onClose={onClose}
+                />
+              </Canvas>
+              
+              {/* Hover images overlay */}
+              <div className="hover-images-container">
+                {LINKS.map((text, i) => (
+                  <div
+                    key={`hover-${i}`}
+                    ref={(el) => { hoverImageRefs.current[i] = el; }}
+                    className="hover-image"
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {!isMobile && (
+          <div className="menu-right flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-8 w-[100%]">
+              {/* Video Section */}
+              <div className="w-full h-[70vh] relative overflow-hidden rounded-lg">
+                <video 
+                  className="w-full h-full object-cover"
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                >
+                  <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                </video>
+              </div>
+              
+              {/* Options Below Video */}
+              <div className="flex items-center justify-center gap-6" style={{fontFamily:'monospace'}}>
+                <button className="px-6 py-3 bg-transparent  text-white text-sm tracking-widest hover:border-white/40 hover:text-red-500 transition-all duration-300">
+                  OPTION 01
+                </button>
+                <button className="px-6 py-3 bg-transparent  text-white text-sm tracking-widest hover:border-white/40 hover:text-red-500 transition-all duration-300">
+                  OPTION 02
+                </button>
+                <button className="px-6 py-3 bg-transparent  text-white text-sm tracking-widest hover:border-white/40 hover:text-red-500 transition-all duration-300">
+                  OPTION 03
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+              <button className="menu-close" onClick={onClose}>
+                <h1>CLOSE</h1>
+              </button>
+            </motion.div>
+      )}
+    </AnimatePresence>
     </>
   );
 }
