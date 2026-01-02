@@ -286,6 +286,22 @@ export default function MenuOverlay({
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       // Show red overlay first
@@ -415,6 +431,7 @@ export default function MenuOverlay({
     const onWheel = (e: WheelEvent) => {
       if (!isOpen) return;
       e.preventDefault();
+      e.stopPropagation(); // Stop event from reaching InfinitusViewer
       
       const now = Date.now();
       const timeDiff = now - lastWheelTime;
@@ -582,7 +599,7 @@ export default function MenuOverlay({
           background: #0a0a0a;
         }
 
-        .menu-left canvas {
+        .menu-canvas {
           width: 100% !important;
           height: 100% !important;
           cursor: pointer;
@@ -660,7 +677,7 @@ export default function MenuOverlay({
         }
 
         .menu-right {
-          width: 55%;
+          width: 60%;
           height: 100%;
           overflow: hidden;
           transform: translateZ(0);
